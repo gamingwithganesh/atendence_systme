@@ -5,7 +5,7 @@ const ManageTeachers = () => {
   const [teachers, setTeachers] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
-  const userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
+  const userInfo = JSON.parse(sessionStorage.getItem('userInfo')) || {};
 
   const fetchTeachers = async () => {
     try {

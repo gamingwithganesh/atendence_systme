@@ -2,14 +2,14 @@ import Subject from '../models/Subject.js';
 
 export const addSubject = async (req, res) => {
     try {
-        const { name, code, lecturesPerWeek, teacher } = req.body;
+        const { name, code, lecturesPerWeek, teacher, duration } = req.body;
         const department = req.user.department; // HOD's department
 
         const subjectExists = await Subject.findOne({ code });
         if (subjectExists) return res.status(400).json({ message: 'Subject with this code already exists' });
 
         const subject = await Subject.create({
-            name, code, department, lecturesPerWeek, teacher
+            name, code, department, lecturesPerWeek, teacher, duration
         });
 
         res.status(201).json(subject);
@@ -29,10 +29,10 @@ export const getSubjects = async (req, res) => {
 
 export const editSubject = async (req, res) => {
     try {
-        const { name, code, lecturesPerWeek, teacher } = req.body;
+        const { name, code, lecturesPerWeek, teacher, duration } = req.body;
         const subject = await Subject.findOneAndUpdate(
             { _id: req.params.id, department: req.user.department },
-            { name, code, lecturesPerWeek, teacher },
+            { name, code, lecturesPerWeek, teacher, duration },
             { new: true }
         ).populate('teacher', 'name email');
 

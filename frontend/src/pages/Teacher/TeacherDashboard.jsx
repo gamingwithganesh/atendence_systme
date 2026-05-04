@@ -7,6 +7,8 @@ const TeacherDashboard = () => {
   const [showAttendanceModal, setShowAttendanceModal] = useState(false);
   const [mySlots, setMySlots] = useState([]);
   const [allSlots, setAllSlots] = useState([]);
+  const [myRequests, setMyRequests] = useState([]);
+  const [incomingRequests, setIncomingRequests] = useState([]);
   const [swapData, setSwapData] = useState({ requestingSlot: '', targetSlot: '' });
   
   // Attendance states
@@ -15,9 +17,8 @@ const TeacherDashboard = () => {
   const [attendanceData, setAttendanceData] = useState({}); // { studentId: true/false }
   
   const [loading, setLoading] = useState(false);
-  const [toastMessage, setToastMessage] = useState(null);
 
-  const userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
+  const userInfo = JSON.parse(sessionStorage.getItem('userInfo')) || {};
 
   const fetchSlots = async () => {
     try {
@@ -40,45 +41,43 @@ const TeacherDashboard = () => {
     }
   };
 
+  const fetchMyRequests = async () => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+      const res = await axios.get('http://localhost:5001/api/swaps/my-requests', config);
+      setMyRequests(res.data);
+    } catch (error) {
+      console.error('Error fetching swap requests', error);
+    }
+  };
+
+  const fetchIncomingRequests = async () => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+      const res = await axios.get('http://localhost:5001/api/swaps/incoming', config);
+      setIncomingRequests(res.data);
+    } catch (error) {
+      console.error('Error fetching incoming swap requests', error);
+    }
+  };
+
+  const handleSwapResponse = async (id, action) => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+      await axios.put(`http://localhost:5001/api/swaps/${id}/${action}`, {}, config);
+      alert(action === 'accept' ? 'Swap accepted! Timetable updated.' : 'Swap declined.');
+      fetchIncomingRequests();
+      fetchSlots(); // Refresh schedule if swap was accepted
+    } catch (error) {
+      alert(error.response?.data?.message || `Error responding to swap`);
+    }
+  };
+
   useEffect(() => {
     fetchSlots();
-    
-    if ('Notification' in window && Notification.permission !== 'granted') {
-      Notification.requestPermission();
-    }
-
-    const interval = setInterval(() => {
-      const now = new Date();
-      const currentDay = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][now.getDay()];
-      
-      mySlots.forEach(slot => {
-        if (slot.dayOfWeek !== currentDay) return;
-        
-        const [hours, minutes] = slot.startTime.split(':');
-        const lectureTime = new Date();
-        lectureTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-        
-        const diffMs = lectureTime - now;
-        const diffMins = Math.floor(diffMs / 60000);
-        
-        if (diffMins === 10) {
-          // Native browser notification (if allowed)
-          if (Notification.permission === 'granted') {
-            new Notification('Upcoming Lecture Reminder!', {
-              body: `Your ${slot.subject?.name} class for ${slot.class?.name} starts in 10 minutes at ${slot.room || 'TBA'}.`,
-              icon: '/vite.svg'
-            });
-          }
-          
-          // In-App Toast Notification (always visible)
-          setToastMessage(`Heads up! Your ${slot.subject?.name} class for ${slot.class?.name} starts in 10 minutes.`);
-          setTimeout(() => setToastMessage(null), 15000); // Hide after 15 seconds
-        }
-      });
-    }, 60000);
-
-    return () => clearInterval(interval);
-  }, [mySlots]);
+    fetchMyRequests();
+    fetchIncomingRequests();
+  }, []);
 
   const handleRequestSwap = async (e) => {
     // ... swap logic remains unchanged
@@ -103,7 +102,8 @@ const TeacherDashboard = () => {
 
       setShowSwapModal(false);
       setSwapData({ requestingSlot: '', targetSlot: '' });
-      alert('Swap request submitted to HOD successfully!');
+      alert('Swap request submitted to the target teacher successfully!');
+      fetchMyRequests(); // Refresh the requests list
     } catch (error) {
       alert(error.response?.data?.message || 'Error creating swap request');
     } finally {
@@ -163,18 +163,6 @@ const TeacherDashboard = () => {
 
   return (
     <div className="portal-page" style={{ position: 'relative' }}>
-      
-      {/* In-App Toast Notification */}
-      {toastMessage && (
-        <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 9999, backgroundColor: '#3B82F6', color: 'white', padding: '1rem 1.5rem', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: '1rem', animation: 'slideIn 0.3s ease-out' }}>
-          <div>
-            <h4 style={{ margin: 0, marginBottom: '0.25rem' }}>Upcoming Lecture</h4>
-            <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.9 }}>{toastMessage}</p>
-          </div>
-          <button onClick={() => setToastMessage(null)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '0.2rem' }}><X size={16} /></button>
-        </div>
-      )}
-
       <div className="page-header">
         <div>
           <h1>Teacher Dashboard</h1>
@@ -201,6 +189,112 @@ const TeacherDashboard = () => {
                 </button>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Incoming Swap Requests */}
+        {incomingRequests.length > 0 && (
+          <div className="card" style={{ marginTop: '2rem', border: '2px solid #F59E0B' }}>
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ background: '#F59E0B', color: 'white', borderRadius: '50%', width: 24, height: 24, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700 }}>{incomingRequests.length}</span>
+              Incoming Swap Requests
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1rem', marginTop: '0.25rem' }}>A fellow teacher wants to swap a slot with you. Review and respond below.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {incomingRequests.map(req => (
+                <div key={req._id} style={{ border: '1px solid var(--border-color)', borderRadius: '10px', padding: '1rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontWeight: 600, marginBottom: '0.25rem' }}>From: {req.requestingTeacher?.name}</p>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
+                      <strong>Their slot:</strong> {req.requestingSlot ? `${req.requestingSlot.dayOfWeek} ${req.requestingSlot.startTime} — ${req.requestingSlot.subject?.name}` : 'Slot Deleted'}
+                    </p>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0, marginTop: '0.15rem' }}>
+                      <strong>Your slot:</strong> {req.targetSlot ? `${req.targetSlot.dayOfWeek} ${req.targetSlot.startTime} — ${req.targetSlot.subject?.name}` : 'Slot Deleted'}
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      className="btn-primary"
+                      style={{ backgroundColor: '#10B981', padding: '0.4rem 1rem', fontSize: '0.875rem' }}
+                      onClick={() => handleSwapResponse(req._id, 'accept')}
+                    >
+                      ✓ Accept
+                    </button>
+                    <button
+                      className="btn-primary"
+                      style={{ backgroundColor: '#EF4444', padding: '0.4rem 1rem', fontSize: '0.875rem' }}
+                      onClick={() => handleSwapResponse(req._id, 'decline')}
+                    >
+                      ✗ Decline
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="card swap-requests-status" style={{ marginTop: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2>My Sent Swap Requests</h2>
+            {myRequests.length > 5 && (
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Showing last 5 of {myRequests.length}</span>
+            )}
+          </div>
+          <div className="table-responsive" style={{ marginTop: '1rem' }}>
+            <table className="timetable-grid" style={{ minWidth: '100%' }}>
+              <thead>
+                <tr>
+                  <th>Requested Slot</th>
+                  <th>Target Slot</th>
+                  <th>Target Teacher</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {myRequests.length === 0 ? (
+                  <tr><td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No swap requests sent yet.</td></tr>
+                ) : myRequests.slice(0, 5).map(req => (
+                  <tr key={req._id} style={{ textAlign: 'center' }}>
+                    <td style={{ padding: '1rem' }}>
+                      <div style={{ fontWeight: 500 }}>
+                        {req.requestingSlot ? (
+                          `${req.requestingSlot.startTime} - ${req.requestingSlot.subject?.name || 'Subject Missing'} , ${req.requestingSlot.dayOfWeek}`
+                        ) : (
+                          <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>Slot Deleted</span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ fontWeight: 500 }}>
+                        {req.targetSlot ? (
+                          `${req.targetSlot.startTime} - ${req.targetSlot.subject?.name || 'Subject Missing'} , ${req.targetSlot.dayOfWeek}`
+                        ) : (
+                          <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>Slot Deleted</span>
+                        )}
+                      </div>
+                    </td>
+                    <td>{req.targetTeacher?.name}</td>
+                    <td>
+                      <span className="class-prof" style={{
+                        backgroundColor: req.status === 'approved' ? '#D1FAE5' : req.status === 'rejected' ? '#FEE2E2' : '#FEF3C7',
+                        color: req.status === 'approved' ? '#059669' : req.status === 'rejected' ? '#DC2626' : '#D97706',
+                        borderColor: 'transparent'
+                      }}>
+                        {req.status === 'pending'
+                          ? ((!req.targetTeacherStatus || req.targetTeacherStatus === 'pending') ? 'AWAITING TEACHER' : req.targetTeacherStatus.toUpperCase())
+                          : req.status.toUpperCase()}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {myRequests.length > 5 && (
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', padding: '0.6rem 1rem', borderTop: '1px solid var(--border-color)', margin: 0 }}>
+                ℹ Full history is available in the HOD Swap Requests page.
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -234,7 +328,7 @@ const TeacherDashboard = () => {
                 </select>
               </div>
               <button type="submit" className="btn-primary" disabled={loading}>
-                {loading ? 'Submitting...' : 'Submit Request to HOD'}
+                {loading ? 'Submitting...' : 'Send Swap Request'}
               </button>
             </form>
           </div>

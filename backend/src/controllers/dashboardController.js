@@ -21,6 +21,8 @@ export const getDashboardStats = async (req, res) => {
         let upcomingClasses = [];
         let recentActivity = [];
 
+        let pendingSwaps = 0;
+
         if (req.user.role === 'hod') {
             const classIds = await Class.find(matchCondition).select('_id');
             const cIds = classIds.map(c => c._id);
@@ -51,6 +53,9 @@ export const getDashboardStats = async (req, res) => {
                 time: slot.updatedAt,
                 type: 'timetable'
             }));
+
+            // Get pending swaps count
+            pendingSwaps = await SwapRequest.countDocuments({ status: 'pending' });
 
             // Get recent swaps
             const recentSwaps = await SwapRequest.find({
@@ -102,6 +107,7 @@ export const getDashboardStats = async (req, res) => {
             totalTeachers,
             activeClasses,
             todaysLectures,
+            pendingSwaps,
             upcomingClasses,
             recentActivity: recentActivity.slice(0, 4)
         });

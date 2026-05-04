@@ -5,7 +5,7 @@ const ManageHODs = () => {
   const [hods, setHods] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', password: '', department: '' });
-  const userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
+  const userInfo = JSON.parse(sessionStorage.getItem('userInfo')) || {};
 
   const fetchHODs = async () => {
     try {

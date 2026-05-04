@@ -60,17 +60,74 @@ export const generateTimetable = async (req, res) => {
                 const isTeacherBusyInArr = newSlots.some(s => s.teacher === teacher._id && s.dayOfWeek === randomDay && s.startTime === randomSlot.start);
 
                 if (!isClassBusy && !isTeacherBusyInDB && !isTeacherBusyInArr) {
+                    // Calculate endTime based on duration
+                    const durationMins = subject.duration || 60;
+                    const [startHourStr, startMinStr] = randomSlot.start.split(':');
+                    const totalStartMins = parseInt(startHourStr) * 60 + parseInt(startMinStr);
+                    const totalEndMins = totalStartMins + durationMins;
+                    const endHour = Math.floor(totalEndMins / 60);
+                    const endMin = totalEndMins % 60;
+                    const computedEndTime = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`;
+
                     newSlots.push({
                         class: classId,
                         subject: subject._id,
                         teacher: teacher._id,
                         dayOfWeek: randomDay,
                         startTime: randomSlot.start,
-                        endTime: randomSlot.end,
+                        endTime: computedEndTime,
                         room: `Room-${Math.floor(Math.random() * 100) + 100}`
                     });
                     assignedLectures++;
                 }
+            }
+        }
+
+        // --- Enforce 90-95% Stress Level (Density) ---
+        // Max capacity: 33 hours * 60 mins = 1980 mins. 90% is 1782 mins.
+        // We will randomly assign extra lectures until we reach at least 1782 scheduled minutes.
+        const targetMins = 1782;
+        
+        let currentMins = newSlots.reduce((acc, slot) => {
+            const subject = subjects.find(s => s._id.toString() === slot.subject.toString());
+            return acc + (subject?.duration || 60);
+        }, 0);
+
+        let attempts = 0;
+        while (currentMins < targetMins && attempts < 1000 && subjects.length > 0) {
+            attempts++;
+            const randomSubject = subjects[Math.floor(Math.random() * subjects.length)];
+            const teacher = teachers.find(t => t._id.toString() === randomSubject.teacher?.toString());
+            if (!teacher) continue;
+
+            const randomDay = days[Math.floor(Math.random() * days.length)];
+            const availableSlots = randomDay === 'Saturday' ? saturdaySlots : regularSlots;
+            const randomSlot = availableSlots[Math.floor(Math.random() * availableSlots.length)];
+
+            // Check constraints
+            const isClassBusy = newSlots.some(s => s.dayOfWeek === randomDay && s.startTime === randomSlot.start);
+            const isTeacherBusyInDB = await TimetableSlot.findOne({ teacher: teacher._id, dayOfWeek: randomDay, startTime: randomSlot.start });
+            const isTeacherBusyInArr = newSlots.some(s => s.teacher === teacher._id && s.dayOfWeek === randomDay && s.startTime === randomSlot.start);
+
+            if (!isClassBusy && !isTeacherBusyInDB && !isTeacherBusyInArr) {
+                const durationMins = randomSubject.duration || 60;
+                const [startHourStr, startMinStr] = randomSlot.start.split(':');
+                const totalStartMins = parseInt(startHourStr) * 60 + parseInt(startMinStr);
+                const totalEndMins = totalStartMins + durationMins;
+                const endHour = Math.floor(totalEndMins / 60);
+                const endMin = totalEndMins % 60;
+                const computedEndTime = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`;
+
+                newSlots.push({
+                    class: classId,
+                    subject: randomSubject._id,
+                    teacher: teacher._id,
+                    dayOfWeek: randomDay,
+                    startTime: randomSlot.start,
+                    endTime: computedEndTime,
+                    room: `Room-${Math.floor(Math.random() * 100) + 100}`
+                });
+                currentMins += durationMins;
             }
         }
 

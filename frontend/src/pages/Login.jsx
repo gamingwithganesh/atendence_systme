@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Calendar } from 'lucide-react';
+import { Calendar, Eye, EyeOff } from 'lucide-react';
 import './Login.css';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -16,7 +17,7 @@ const Login = () => {
       // Assuming backend is running on 5001
       const { data } = await axios.post('http://localhost:5001/api/auth/login', { email, password });
       
-      localStorage.setItem('userInfo', JSON.stringify(data));
+      sessionStorage.setItem('userInfo', JSON.stringify(data));
       
       // Redirect based on role
       if (data.role === 'admin') navigate('/admin-dashboard');
@@ -59,14 +60,24 @@ const Login = () => {
             </div>
             <div className="input-group">
               <label className="input-label">Password</label>
-              <input 
-                type="password" 
-                className="input-field" 
-                placeholder="••••••••" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="password-input-wrapper">
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  className="input-field" 
+                  placeholder="••••••••" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button 
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
             
             <div className="login-options">

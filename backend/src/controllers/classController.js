@@ -26,3 +26,21 @@ export const getClasses = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+export const editClass = async (req, res) => {
+    try {
+        const { name, year, semester } = req.body;
+        const updatedClass = await Class.findOneAndUpdate(
+            { _id: req.params.id, department: req.user.department },
+            { name, year, semester },
+            { new: true }
+        );
+
+        if (!updatedClass) {
+            return res.status(404).json({ message: 'Class not found' });
+        }
+        res.json(updatedClass);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

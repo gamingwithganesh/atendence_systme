@@ -7,7 +7,7 @@ const ManageStudents = () => {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', password: '', enrolledClass: '' });
   
-  const userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
+  const userInfo = JSON.parse(sessionStorage.getItem('userInfo')) || {};
 
   const fetchData = async () => {
     try {

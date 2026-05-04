@@ -25,6 +25,10 @@ const subjectSchema = new mongoose.Schema(
             ref: 'User',
             required: true,
         },
+        duration: {
+            type: Number,
+            default: 60, // in minutes
+        },
     },
     {
         timestamps: true,

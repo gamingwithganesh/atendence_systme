@@ -5,11 +5,11 @@ import './Sidebar.css';
 
 const Sidebar = () => {
   const navigate = useNavigate();
-  const userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
+  const userInfo = JSON.parse(sessionStorage.getItem('userInfo')) || {};
   const role = userInfo.role || 'student';
 
   const handleLogout = () => {
-    localStorage.removeItem('userInfo');
+    sessionStorage.removeItem('userInfo');
     navigate('/login');
   };
 
@@ -60,6 +60,10 @@ const Sidebar = () => {
               <Clock size={20} />
               <span>Timetables</span>
             </NavLink>
+            <NavLink to="/swap-requests" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+              <FileText size={20} />
+              <span>Swap Requests</span>
+            </NavLink>
           </>
         )}
 
@@ -72,10 +76,6 @@ const Sidebar = () => {
             <NavLink to="/my-timetable" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
               <Clock size={20} />
               <span>My Timetable</span>
-            </NavLink>
-            <NavLink to="/swap-requests" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-              <FileText size={20} />
-              <span>Swap Requests</span>
             </NavLink>
           </>
         )}

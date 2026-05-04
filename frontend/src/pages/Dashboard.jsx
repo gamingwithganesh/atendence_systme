@@ -19,7 +19,7 @@ const StatCard = ({ title, value, icon: Icon, colorClass }) => (
 const Dashboard = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState({ totalStudents: 0, totalTeachers: 0, activeClasses: 0, todaysLectures: 0 });
-  const userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
+  const userInfo = JSON.parse(sessionStorage.getItem('userInfo')) || {};
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -55,7 +55,12 @@ const Dashboard = () => {
         <StatCard title="Total Students" value={stats.totalStudents} icon={Users} colorClass="bg-blue" />
         <StatCard title="Total Teachers" value={stats.totalTeachers} icon={BookOpen} colorClass="bg-green" />
         <StatCard title="Active Classes" value={stats.activeClasses} icon={CalendarIcon} colorClass="bg-purple" />
-        <StatCard title="Today's Lectures" value={stats.todaysLectures} icon={Clock} colorClass="bg-orange" />
+        
+        {userInfo.role === 'hod' ? (
+          <StatCard title="Pending Swaps" value={stats.pendingSwaps || 0} icon={Clock} colorClass="bg-orange" />
+        ) : (
+          <StatCard title="Today's Lectures" value={stats.todaysLectures} icon={Clock} colorClass="bg-orange" />
+        )}
       </div>
 
       <div className="dashboard-content">

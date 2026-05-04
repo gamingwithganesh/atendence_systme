@@ -8,11 +8,12 @@ const ManageSubjects = () => {
   const [showSubjectForm, setShowSubjectForm] = useState(false);
   const [showClassForm, setShowClassForm] = useState(false);
   const [editingSubjectId, setEditingSubjectId] = useState(null);
+  const [editingClassId, setEditingClassId] = useState(null);
   
-  const [subjectData, setSubjectData] = useState({ name: '', code: '', lecturesPerWeek: 3, teacher: '' });
+  const [subjectData, setSubjectData] = useState({ name: '', code: '', lecturesPerWeek: 3, teacher: '', duration: 60 });
   const [classData, setClassData] = useState({ name: '', year: 1, semester: 1 });
   
-  const userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};
+  const userInfo = JSON.parse(sessionStorage.getItem('userInfo')) || {};
 
   const fetchData = async () => {
     try {
@@ -44,7 +45,7 @@ const ManageSubjects = () => {
       }
       setShowSubjectForm(false);
       setEditingSubjectId(null);
-      setSubjectData({ name: '', code: '', lecturesPerWeek: 3, teacher: '' });
+      setSubjectData({ name: '', code: '', lecturesPerWeek: 3, teacher: '', duration: 60 });
       fetchData();
     } catch (error) {
       alert(error.response?.data?.message || 'Error saving subject');
@@ -57,7 +58,8 @@ const ManageSubjects = () => {
       name: subject.name,
       code: subject.code,
       lecturesPerWeek: subject.lecturesPerWeek,
-      teacher: subject.teacher?._id || ''
+      teacher: subject.teacher?._id || '',
+      duration: subject.duration || 60
     });
     setShowSubjectForm(true);
   };
@@ -65,15 +67,29 @@ const ManageSubjects = () => {
   const handleAddClass = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5001/api/classes', classData, {
-        headers: { Authorization: `Bearer ${userInfo.token}` }
-      });
+      const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+      if (editingClassId) {
+        await axios.put(`http://localhost:5001/api/classes/${editingClassId}`, classData, config);
+      } else {
+        await axios.post('http://localhost:5001/api/classes', classData, config);
+      }
       setShowClassForm(false);
+      setEditingClassId(null);
       setClassData({ name: '', year: 1, semester: 1 });
       fetchData();
     } catch (error) {
-      alert(error.response?.data?.message || 'Error adding class');
+      alert(error.response?.data?.message || 'Error saving class');
     }
+  };
+
+  const handleEditClassClick = (cls) => {
+    setEditingClassId(cls._id);
+    setClassData({
+      name: cls.name,
+      year: cls.year,
+      semester: cls.semester
+    });
+    setShowClassForm(true);
   };
 
   return (
@@ -91,12 +107,13 @@ const ManageSubjects = () => {
 
       {showClassForm && (
         <div className="card" style={{ marginBottom: '1.5rem', backgroundColor: '#F9FAFB' }}>
-          <h3>Add New Class</h3>
+          <h3>{editingClassId ? 'Edit Class' : 'Add New Class'}</h3>
           <form onSubmit={handleAddClass} style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
             <input className="input-field" style={{ flex: 1 }} placeholder="Class Name (e.g. CS - Year 1)" value={classData.name} onChange={(e) => setClassData({...classData, name: e.target.value})} required />
             <input type="number" className="input-field" style={{ flex: 1 }} placeholder="Year" value={classData.year} onChange={(e) => setClassData({...classData, year: e.target.value})} required />
             <input type="number" className="input-field" style={{ flex: 1 }} placeholder="Semester" value={classData.semester} onChange={(e) => setClassData({...classData, semester: e.target.value})} required />
-            <button type="submit" className="btn-secondary">Save Class</button>
+            <button type="submit" className="btn-secondary">{editingClassId ? 'Update' : 'Save'} Class</button>
+            {editingClassId && <button type="button" className="btn-primary" style={{backgroundColor: '#E5E7EB', color: '#374151'}} onClick={() => {setShowClassForm(false); setEditingClassId(null); setClassData({ name: '', year: 1, semester: 1 })}}>Cancel</button>}
           </form>
         </div>
       )}
@@ -109,13 +126,21 @@ const ManageSubjects = () => {
             <input className="input-field" style={{ flex: 1 }} placeholder="Subject Code (e.g. CS101)" value={subjectData.code} onChange={(e) => setSubjectData({...subjectData, code: e.target.value})} required />
             <input type="number" className="input-field" style={{ flex: 1 }} placeholder="Lectures Per Week" value={subjectData.lecturesPerWeek} onChange={(e) => setSubjectData({...subjectData, lecturesPerWeek: e.target.value})} required />
             
+            <select className="input-field" style={{ flex: 1 }} value={subjectData.duration} onChange={(e) => setSubjectData({...subjectData, duration: Number(e.target.value)})} required>
+              <option value={60}>1h</option>
+              <option value={90}>1h 30m</option>
+              <option value={120}>2h</option>
+              <option value={150}>2h 30m</option>
+              <option value={180}>3h</option>
+            </select>
+
             <select className="input-field" style={{ flex: 1 }} value={subjectData.teacher} onChange={(e) => setSubjectData({...subjectData, teacher: e.target.value})} required>
               <option value="">-- Assign Teacher --</option>
               {teachers.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
             </select>
 
             <button type="submit" className="btn-primary">{editingSubjectId ? 'Update' : 'Save'} Subject</button>
-            {editingSubjectId && <button type="button" className="btn-secondary" onClick={() => {setShowSubjectForm(false); setEditingSubjectId(null); setSubjectData({ name: '', code: '', lecturesPerWeek: 3, teacher: '' })}}>Cancel</button>}
+            {editingSubjectId && <button type="button" className="btn-secondary" onClick={() => {setShowSubjectForm(false); setEditingSubjectId(null); setSubjectData({ name: '', code: '', lecturesPerWeek: 3, teacher: '', duration: 60 })}}>Cancel</button>}
           </form>
         </div>
       )}
@@ -125,9 +150,12 @@ const ManageSubjects = () => {
           <h2>Classes</h2>
           <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem' }}>
             {classes.length === 0 ? <p>No classes found.</p> : classes.map(c => (
-              <li key={c._id} style={{ padding: '0.8rem', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between' }}>
-                <strong>{c.name}</strong>
-                <span className="text-secondary">Year {c.year} • Sem {c.semester}</span>
+              <li key={c._id} style={{ padding: '0.8rem', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <strong>{c.name}</strong>
+                  <div className="text-secondary" style={{ fontSize: '0.85rem' }}>Year {c.year} • Sem {c.semester}</div>
+                </div>
+                <button className="btn-secondary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.8rem' }} onClick={() => handleEditClassClick(c)}>Edit</button>
               </li>
             ))}
           </ul>
@@ -143,7 +171,7 @@ const ManageSubjects = () => {
                   <div style={{fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.3rem'}}>Teacher: {s.teacher?.name || 'Unassigned'}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <span className="text-secondary">{s.lecturesPerWeek} lectures/wk</span>
+                  <span className="text-secondary">{s.lecturesPerWeek} lectures/wk • {s.duration >= 60 ? `${Math.floor(s.duration / 60)}h ` : ''}{s.duration % 60 > 0 ? `${s.duration % 60}m` : ''}</span>
                   <button className="btn-secondary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.8rem' }} onClick={() => handleEditClick(s)}>Edit</button>
                 </div>
               </li>

@@ -22,6 +22,13 @@ const swapRequestSchema = new mongoose.Schema(
             ref: 'TimetableSlot',
             required: true,
         },
+        // Step 1: target teacher's decision
+        targetTeacherStatus: {
+            type: String,
+            enum: ['pending', 'accepted', 'declined'],
+            default: 'pending',
+        },
+        // Step 2: overall status (auto-set after target teacher accepts/declines)
         status: {
             type: String,
             enum: ['pending', 'approved', 'rejected'],
