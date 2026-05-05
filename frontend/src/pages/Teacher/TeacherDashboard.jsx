@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { X, Check } from 'lucide-react';
+import API_BASE_URL from '../../config/api';
 
 const TeacherDashboard = () => {
   const [showSwapModal, setShowSwapModal] = useState(false);
@@ -23,11 +24,11 @@ const TeacherDashboard = () => {
   const fetchSlots = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-      const clsRes = await axios.get('http://localhost:5001/api/classes', config);
+      const clsRes = await axios.get(`${API_BASE_URL}/api/classes`, config);
       
       let allFoundSlots = [];
       for (const cls of clsRes.data) {
-        const timeRes = await axios.get(`http://localhost:5001/api/timetable/class/${cls._id}`, config);
+        const timeRes = await axios.get(`${API_BASE_URL}/api/timetable/class/${cls._id}`, config);
         allFoundSlots = [...allFoundSlots, ...timeRes.data];
       }
 
@@ -44,7 +45,7 @@ const TeacherDashboard = () => {
   const fetchMyRequests = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-      const res = await axios.get('http://localhost:5001/api/swaps/my-requests', config);
+      const res = await axios.get(`${API_BASE_URL}/api/swaps/my-requests`, config);
       setMyRequests(res.data);
     } catch (error) {
       console.error('Error fetching swap requests', error);
@@ -54,7 +55,7 @@ const TeacherDashboard = () => {
   const fetchIncomingRequests = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-      const res = await axios.get('http://localhost:5001/api/swaps/incoming', config);
+      const res = await axios.get(`${API_BASE_URL}/api/swaps/incoming`, config);
       setIncomingRequests(res.data);
     } catch (error) {
       console.error('Error fetching incoming swap requests', error);
@@ -64,7 +65,7 @@ const TeacherDashboard = () => {
   const handleSwapResponse = async (id, action) => {
     try {
       const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-      await axios.put(`http://localhost:5001/api/swaps/${id}/${action}`, {}, config);
+      await axios.put(`${API_BASE_URL}/api/swaps/${id}/${action}`, {}, config);
       alert(action === 'accept' ? 'Swap accepted! Timetable updated.' : 'Swap declined.');
       fetchIncomingRequests();
       fetchSlots(); // Refresh schedule if swap was accepted
@@ -92,7 +93,7 @@ const TeacherDashboard = () => {
         return alert('Invalid target slot or no teacher assigned to it');
       }
 
-      await axios.post('http://localhost:5001/api/swaps', {
+      await axios.post(`${API_BASE_URL}/api/swaps`, {
         requestingSlot: swapData.requestingSlot,
         targetSlot: swapData.targetSlot,
         targetTeacher: target.teacher._id
@@ -115,7 +116,7 @@ const TeacherDashboard = () => {
     setCurrentAttendanceSlot(slot);
     setLoading(true);
     try {
-      const { data } = await axios.get(`http://localhost:5001/api/users/class/${slot.class._id}/students`, {
+      const { data } = await axios.get(`${API_BASE_URL}/api/users/class/${slot.class._id}/students`, {
         headers: { Authorization: `Bearer ${userInfo.token}` }
       });
       setClassStudents(data);
@@ -145,7 +146,7 @@ const TeacherDashboard = () => {
     const absentStudents = Object.keys(attendanceData).filter(id => !attendanceData[id]);
 
     try {
-      await axios.post('http://localhost:5001/api/attendance', {
+      await axios.post(`${API_BASE_URL}/api/attendance`, {
         classId: currentAttendanceSlot.class._id,
         subjectId: currentAttendanceSlot.subject._id,
         date: new Date(),

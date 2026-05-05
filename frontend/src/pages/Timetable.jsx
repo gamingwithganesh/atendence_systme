@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Edit2, Download, RefreshCcw, X, Trash2 } from 'lucide-react';
+import API_BASE_URL from '../config/api';
 import { exportToPDF } from '../utils/pdfExport';
 import './Timetable.css';
 
@@ -54,15 +55,15 @@ const Timetable = () => {
     try {
       const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
       
-      const classRes = await axios.get('http://localhost:5001/api/classes', config);
+      const classRes = await axios.get(`${API_BASE_URL}/api/classes`, config);
       setClasses(classRes.data);
       if (classRes.data.length > 0) setSelectedClass(classRes.data[0]._id);
 
       if (userInfo.role === 'hod') {
-        const subRes = await axios.get('http://localhost:5001/api/subjects', config);
+        const subRes = await axios.get(`${API_BASE_URL}/api/subjects`, config);
         setSubjects(subRes.data);
         
-        const teachRes = await axios.get('http://localhost:5001/api/users/teacher', config);
+        const teachRes = await axios.get(`${API_BASE_URL}/api/users/teacher`, config);
         setTeachers(teachRes.data);
 
         // Pass class list directly — state may not be set yet
@@ -76,7 +77,7 @@ const Timetable = () => {
   const fetchTimetable = async (classId) => {
     if (!classId) return;
     try {
-      const { data } = await axios.get(`http://localhost:5001/api/timetable/class/${classId}`, {
+      const { data } = await axios.get(`${API_BASE_URL}/api/timetable/class/${classId}`, {
         headers: { Authorization: `Bearer ${userInfo.token}` }
       });
       setTimetableData(data);
@@ -93,7 +94,7 @@ const Timetable = () => {
       const classList = allClasses || classes;
       const allSlots = [];
       for (const cls of classList) {
-        const { data } = await axios.get(`http://localhost:5001/api/timetable/class/${cls._id}`, config);
+        const { data } = await axios.get(`${API_BASE_URL}/api/timetable/class/${cls._id}`, config);
         allSlots.push(...data);
       }
 
@@ -139,7 +140,7 @@ const Timetable = () => {
     if (!selectedClass) return alert('Select a class first');
     setLoading(true);
     try {
-      await axios.post('http://localhost:5001/api/timetable/auto-generate', { classId: selectedClass }, {
+      await axios.post(`${API_BASE_URL}/api/timetable/auto-generate`, { classId: selectedClass }, {
         headers: { Authorization: `Bearer ${userInfo.token}` }
       });
       await fetchTimetable(selectedClass);
@@ -170,7 +171,7 @@ const Timetable = () => {
     const endTime = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`;
 
     try {
-      await axios.post('http://localhost:5001/api/timetable', {
+      await axios.post(`${API_BASE_URL}/api/timetable`, {
         ...slotData,
         class: selectedClass,
         endTime
@@ -192,7 +193,7 @@ const Timetable = () => {
   const handleDeleteSlot = async (slotId) => {
     if (!window.confirm('Are you sure you want to delete this lecture slot?')) return;
     try {
-      await axios.delete(`http://localhost:5001/api/timetable/${slotId}`, {
+      await axios.delete(`${API_BASE_URL}/api/timetable/${slotId}`, {
         headers: { Authorization: `Bearer ${userInfo.token}` }
       });
       await fetchTimetable(selectedClass);
@@ -214,7 +215,7 @@ const Timetable = () => {
     if (!sourceSlotId) return;
 
     try {
-      await axios.post('http://localhost:5001/api/timetable/move', {
+      await axios.post(`${API_BASE_URL}/api/timetable/move`, {
         sourceSlotId,
         targetDay,
         targetTime

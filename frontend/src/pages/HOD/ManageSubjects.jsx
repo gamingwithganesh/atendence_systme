@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '../../config/api';
 
 const ManageSubjects = () => {
   const [subjects, setSubjects] = useState([]);
@@ -18,9 +19,9 @@ const ManageSubjects = () => {
   const fetchData = async () => {
     try {
       const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-      const subRes = await axios.get('http://localhost:5001/api/subjects', config);
-      const clsRes = await axios.get('http://localhost:5001/api/classes', config);
-      const teachRes = await axios.get('http://localhost:5001/api/users/teacher', config);
+      const subRes = await axios.get(`${API_BASE_URL}/api/subjects`, config);
+      const clsRes = await axios.get(`${API_BASE_URL}/api/classes`, config);
+      const teachRes = await axios.get(`${API_BASE_URL}/api/users/teacher`, config);
       
       setSubjects(subRes.data);
       setClasses(clsRes.data);
@@ -39,9 +40,9 @@ const ManageSubjects = () => {
     try {
       const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
       if (editingSubjectId) {
-        await axios.put(`http://localhost:5001/api/subjects/${editingSubjectId}`, subjectData, config);
+        await axios.put(`${API_BASE_URL}/api/subjects/${editingSubjectId}`, subjectData, config);
       } else {
-        await axios.post('http://localhost:5001/api/subjects', subjectData, config);
+        await axios.post(`${API_BASE_URL}/api/subjects`, subjectData, config);
       }
       setShowSubjectForm(false);
       setEditingSubjectId(null);
@@ -69,9 +70,9 @@ const ManageSubjects = () => {
     try {
       const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
       if (editingClassId) {
-        await axios.put(`http://localhost:5001/api/classes/${editingClassId}`, classData, config);
+        await axios.put(`${API_BASE_URL}/api/classes/${editingClassId}`, classData, config);
       } else {
-        await axios.post('http://localhost:5001/api/classes', classData, config);
+        await axios.post(`${API_BASE_URL}/api/classes`, classData, config);
       }
       setShowClassForm(false);
       setEditingClassId(null);

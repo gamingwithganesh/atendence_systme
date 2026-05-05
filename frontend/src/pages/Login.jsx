@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Calendar, Eye, EyeOff } from 'lucide-react';
+import API_BASE_URL from '../config/api';
 import './Login.css';
 
 const Login = () => {
@@ -14,8 +15,7 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // Assuming backend is running on 5001
-      const { data } = await axios.post('http://localhost:5001/api/auth/login', { email, password });
+      const { data } = await axios.post(`${API_BASE_URL}/api/auth/login`, { email, password });
       
       sessionStorage.setItem('userInfo', JSON.stringify(data));
       

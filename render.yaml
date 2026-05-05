@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: attendance-backend
+    env: node
+    repo: https://github.com/YOUR_USERNAME/atendence_systme
+    branch: main
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: MONGO_URI
+        scope: build
+        value: ${MONGO_URI}
+      - key: MONGO_URI
+        scope: runtime
+        value: ${MONGO_URI}
+      - key: JWT_SECRET
+        scope: build
+        value: ${JWT_SECRET}
+      - key: JWT_SECRET
+        scope: runtime
+        value: ${JWT_SECRET}
+
+  - type: static
+    name: attendance-frontend
+    env: static
+    repo: https://github.com/YOUR_USERNAME/atendence_systme
+    branch: main
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        scope: build
+        value: https://attendance-backend.onrender.com
