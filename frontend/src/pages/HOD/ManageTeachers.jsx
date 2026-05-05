@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import API_BASE_URL from '../../config/api';
 
 const ManageTeachers = () => {
   const [teachers, setTeachers] = useState([]);
@@ -10,7 +9,7 @@ const ManageTeachers = () => {
 
   const fetchTeachers = async () => {
     try {
-      const { data } = await axios.get(`${API_BASE_URL}/api/users/teacher`, {
+      const { data } = await axios.get('http://localhost:5001/api/users/teacher', {
         headers: { Authorization: `Bearer ${userInfo.token}` }
       });
       setTeachers(data);
@@ -26,7 +25,7 @@ const ManageTeachers = () => {
   const handleAddTeacher = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_BASE_URL}/api/users/teacher`, formData, {
+      await axios.post('http://localhost:5001/api/users/teacher', formData, {
         headers: { Authorization: `Bearer ${userInfo.token}` }
       });
       setShowForm(false);
@@ -40,7 +39,7 @@ const ManageTeachers = () => {
   const handleDeleteTeacher = async (id) => {
     if (!window.confirm('Are you sure you want to remove this teacher?')) return;
     try {
-      await axios.delete(`${API_BASE_URL}/api/users/teacher/${id}`, {
+      await axios.delete(`http://localhost:5001/api/users/teacher/${id}`, {
         headers: { Authorization: `Bearer ${userInfo.token}` }
       });
       fetchTeachers();

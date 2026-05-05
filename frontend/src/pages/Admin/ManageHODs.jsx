@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import API_BASE_URL from '../../config/api';
 
 const ManageHODs = () => {
   const [hods, setHods] = useState([]);
@@ -10,7 +9,7 @@ const ManageHODs = () => {
 
   const fetchHODs = async () => {
     try {
-      const { data } = await axios.get(`${API_BASE_URL}/api/users/hod`, {
+      const { data } = await axios.get('http://localhost:5001/api/users/hod', {
         headers: { Authorization: `Bearer ${userInfo.token}` }
       });
       setHods(data);
@@ -26,7 +25,7 @@ const ManageHODs = () => {
   const handleAddHOD = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_BASE_URL}/api/users/hod`, formData, {
+      await axios.post('http://localhost:5001/api/users/hod', formData, {
         headers: { Authorization: `Bearer ${userInfo.token}` }
       });
       setShowForm(false);
@@ -40,7 +39,7 @@ const ManageHODs = () => {
     const handleDeleteHOD = async (id) => {
     if (!window.confirm('Are you sure you want to remove this HOD?')) return;
     try {
-      await axios.delete(`${API_BASE_URL}/api/users/hod/${id}`, {
+      await axios.delete(`http://localhost:5001/api/users/hod/${id}`, {
         headers: { Authorization: `Bearer ${userInfo.token}` }
       });
       fetchHODs();

@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
-import API_BASE_URL from '../config/api';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const NOTIFY_BEFORE_MINS = 10;
@@ -39,10 +38,10 @@ export const useNotifications = () => {
     if (!userInfo.token || userInfo.role !== 'teacher') return;
     try {
       const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-      const clsRes = await axios.get(`${API_BASE_URL}/api/classes`, config);
+      const clsRes = await axios.get('http://localhost:5001/api/classes', config);
       let all = [];
       for (const cls of clsRes.data) {
-        const { data } = await axios.get(`${API_BASE_URL}/api/timetable/class/${cls._id}`, config);
+        const { data } = await axios.get(`http://localhost:5001/api/timetable/class/${cls._id}`, config);
         all = [...all, ...data];
       }
       slotsRef.current = all.filter(s => s.teacher && s.teacher._id === userInfo._id);

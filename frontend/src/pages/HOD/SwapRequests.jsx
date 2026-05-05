@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import API_BASE_URL from '../../config/api';
 import '../Dashboard.css';
 
 const SwapRequests = () => {
@@ -14,7 +13,7 @@ const SwapRequests = () => {
     setLoading(true);
     setError('');
     try {
-      const { data } = await axios.get(`${API_BASE_URL}/api/swaps`, {
+      const { data } = await axios.get('http://localhost:5001/api/swaps', {
         headers: { Authorization: `Bearer ${userInfo.token}` }
       });
       setRequests(data);

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Users, BookOpen, Clock, Calendar as CalendarIcon } from 'lucide-react';
-import API_BASE_URL from '../config/api';
 import './Dashboard.css';
 
 const StatCard = ({ title, value, icon: Icon, colorClass }) => (
@@ -25,7 +24,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const { data } = await axios.get(`${API_BASE_URL}/api/dashboard/stats`, {
+        const { data } = await axios.get('http://localhost:5001/api/dashboard/stats', {
           headers: { Authorization: `Bearer ${userInfo.token}` }
         });
         setStats(data);

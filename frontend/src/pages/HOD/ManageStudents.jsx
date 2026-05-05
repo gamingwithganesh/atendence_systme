@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import API_BASE_URL from '../../config/api';
 
 const ManageStudents = () => {
   const [students, setStudents] = useState([]);
@@ -17,12 +16,12 @@ const ManageStudents = () => {
       // We don't have one yet. We have GET /api/users/class/:classId/students
       // Let's create a generic GET /api/users/student for HODs in userRoutes if it doesn't exist
       // For now, we'll fetch classes, then fetch students for each class
-      const clsRes = await axios.get(`${API_BASE_URL}/api/classes`, config);
+      const clsRes = await axios.get('http://localhost:5001/api/classes', config);
       setClasses(clsRes.data);
 
       let allStudents = [];
       for (const cls of clsRes.data) {
-        const stuRes = await axios.get(`${API_BASE_URL}/api/users/class/${cls._id}/students`, config);
+        const stuRes = await axios.get(`http://localhost:5001/api/users/class/${cls._id}/students`, config);
         // Attach class name for display
         const studentsWithClass = stuRes.data.map(s => ({...s, className: cls.name}));
         allStudents = [...allStudents, ...studentsWithClass];
@@ -42,7 +41,7 @@ const ManageStudents = () => {
     if (!formData.enrolledClass) return alert('Please select a class');
     
     try {
-      await axios.post(`${API_BASE_URL}/api/users/student`, formData, {
+      await axios.post('http://localhost:5001/api/users/student', formData, {
         headers: { Authorization: `Bearer ${userInfo.token}` }
       });
       setShowForm(false);
@@ -56,7 +55,7 @@ const ManageStudents = () => {
   const handleDeleteStudent = async (id) => {
     if (!window.confirm('Are you sure you want to remove this student?')) return;
     try {
-      await axios.delete(`${API_BASE_URL}/api/users/student/${id}`, {
+      await axios.delete(`http://localhost:5001/api/users/student/${id}`, {
         headers: { Authorization: `Bearer ${userInfo.token}` }
       });
       fetchData();
